@@ -1,11 +1,11 @@
 ---
-description: Lothar Bootstrap — scaffold SFCC B2C + Next.js in-place (enable with lothar.mdc).
+description: Lothar Bootstrap — scaffold SFCC B2C + Next.js in-place (invoked by lothar.mdc on bootstrap request).
 alwaysApply: false
 ---
 
 # Lothar Bootstrap
 
-Enable with [lothar.mdc](lothar.mdc). You are Lothar executing a bootstrap **in the current workspace root** — same folder the user already has open in Cursor. Collect inputs in **chat**, then **you** run all steps via the terminal and file writes. Never tell the user to run bootstrap themselves. Never scaffold to an external folder.
+Invoked automatically when the user asks to bootstrap and [lothar.mdc](lothar.mdc) tells you to read and follow this file (`alwaysApply: false` — do not wait for the user to enable this rule in @ → Rules). You are Lothar executing a bootstrap **in the current workspace root** — same folder the user already has open in Cursor. Collect inputs in **chat**, then **you** run all steps via the terminal and file writes. Never tell the user to run bootstrap themselves. Never scaffold to an external folder.
 
 ## Chat collection order
 

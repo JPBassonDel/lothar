@@ -4,13 +4,14 @@ Commerce accelerator for Cursor — bootstrap a Next.js + Salesforce B2C storefr
 
 ## Bootstrap with Lothar (Cursor)
 
-Lothar is **opt-in** (`alwaysApply: false`) so normal work in this repo is not forced into bootstrap mode.
+**Lothar** ([lothar.mdc](../.cursor/rules/lothar.mdc)) is **always on** in this workspace (`alwaysApply: true`) — only while this folder is open in Cursor. For unrelated coding, the agent behaves normally; it does not auto-scaffold unless you ask.
 
 1. Open this repo in **Cursor**.
-2. Open **Agent** chat.
-3. **Enable both rules** for this chat: **@** → **Rules** → **Lothar** ([lothar.mdc](../.cursor/rules/lothar.mdc)) and **Lothar Bootstrap** ([lothar-bootstrap.mdc](../.cursor/rules/lothar-bootstrap.mdc)).
-4. Say you want to bootstrap (e.g. “bootstrap my store” or “hi lothar”).
-5. For **B2C + Next.js**, Lothar asks for project name and SFCC env in **chat**, then **runs** `git clone`, merges the template into the workspace root, `pnpm install`, and writes `.env.local` and `accelerator.manifest.json`.
+2. Open **Agent** chat (Lothar is already active — no need to enable rules manually).
+3. Say you want to bootstrap (e.g. “bootstrap my store” or “hi lothar”).
+4. Lothar loads [lothar-bootstrap.mdc](../.cursor/rules/lothar-bootstrap.mdc) automatically and, for **B2C + Next.js**, asks for project name and SFCC env in **chat**, then **runs** `git clone`, merges the template into the workspace root, `pnpm install`, and writes `.env.local` and `accelerator.manifest.json`.
+
+Optional: you can still enable **Lothar Bootstrap** in **@** → **Rules** if you want that rule pinned in context from the start.
 
 After bootstrap, the **store README** lives at the repo root; this file stays here as Lothar meta documentation.
 
@@ -28,7 +29,7 @@ See [AGENTPLAN.md](./AGENTPLAN.md) for architecture; [BOOTSTRAP.md](./BOOTSTRAP.
 cursor-accelerator/
 ├── .cursor/rules/
 │   ├── lothar.mdc           # Persona and capabilities
-│   └── lothar-bootstrap.mdc # In-place scaffold (enable with Lothar)
+│   └── lothar-bootstrap.mdc # In-place scaffold (auto-loaded on bootstrap request)
 ├── lothar-docs/             # This folder — Lothar meta docs
 ├── app/                     # (after bootstrap) Next.js storefront
 ├── package.json             # (after bootstrap)

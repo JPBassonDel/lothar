@@ -2,20 +2,19 @@
 
 This document describes the **conversational** bootstrap experience for Cursor. Bootstrap is driven by **Cursor rules**; the agent runs terminal commands and writes project files into the **current workspace root** — there is no separate CLI package and no external output folder.
 
-**Phase A (implemented):** Lothar runs in **Cursor Agent/Chat** via two opt-in rules:
+**Phase A (implemented):** Lothar runs in **Cursor Agent/Chat** via two project rules:
 
-- [`.cursor/rules/lothar.mdc`](../.cursor/rules/lothar.mdc) — persona, greeting, capability matrix
-- [`.cursor/rules/lothar-bootstrap.mdc`](../.cursor/rules/lothar-bootstrap.mdc) — in-place collection, `git clone`, `rsync`, `pnpm install`, `.env.local`, `accelerator.manifest.json`
+- [`.cursor/rules/lothar.mdc`](../.cursor/rules/lothar.mdc) — persona, greeting, capability matrix (`alwaysApply: true` in this workspace)
+- [`.cursor/rules/lothar-bootstrap.mdc`](../.cursor/rules/lothar-bootstrap.mdc) — in-place collection, `git clone`, `rsync`, `pnpm install`, `.env.local`, `accelerator.manifest.json` (loaded automatically when the user asks to bootstrap)
 
 Related docs: [BOOTSTRAP.md](./BOOTSTRAP.md) (env vars and post-setup), [README.md](./README.md) (how to start), [PLAN.md](./PLAN.md) (roadmap).
 
 ### How to start (Cursor)
 
-1. Open this repo in Cursor (it becomes your storefront after bootstrap).
+1. Open this repo in Cursor (it becomes your storefront after bootstrap). Lothar is always active in this workspace.
 2. Open **Agent** (or Chat).
-3. **Enable both rules** for this conversation (@ → Rules → **Lothar** and **Lothar Bootstrap**). Other chats can stay normal without Lothar.
-4. Say you want to bootstrap (e.g. “bootstrap my store”).
-5. When your goal is **B2C + Next.js**, Lothar asks for project name and SFCC env in **chat**, then **runs** in-place scaffold steps in the terminal (you do not run bootstrap yourself).
+3. Say you want to bootstrap (e.g. “bootstrap my store”). Lothar reads and follows the bootstrap rule — no manual @ → Rules step required.
+4. When your goal is **B2C + Next.js**, Lothar asks for project name and SFCC env in **chat**, then **runs** in-place scaffold steps in the terminal (you do not run bootstrap yourself).
 
 ---
 
@@ -57,7 +56,7 @@ Portability strategy: ship **one prompt/spec** (rules + this doc) and **one set 
 | **Persona** | [lothar.mdc](../.cursor/rules/lothar.mdc) | Greeting, capability matrix, in-place expectation |
 | **Execution** | [lothar-bootstrap.mdc](../.cursor/rules/lothar-bootstrap.mdc) | Chat collection, clone + `rsync` to root, write `.env.local` and manifest |
 
-Both rules use `alwaysApply: false`. Enable them only when bootstrapping.
+**Lothar** uses `alwaysApply: true` (this workspace only). **Bootstrap** uses `alwaysApply: false` and is applied on demand when you ask to bootstrap.
 
 Preserves across bootstrap: `.cursor/rules/`, `lothar-docs/` (including [README.md](./README.md)).
 
