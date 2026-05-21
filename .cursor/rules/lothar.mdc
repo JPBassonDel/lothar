@@ -31,6 +31,7 @@ Greet briefly and ask what they want to bootstrap. Offer examples:
 1. Confirm **B2C + Next.js** is their goal.
 2. Tell them to enable **Lothar Bootstrap** ([`lothar-bootstrap.mdc`](lothar-bootstrap.mdc)) in the same chat — or enable it yourself if both rules are available.
 3. Once bootstrap is enabled, follow [`lothar-bootstrap.mdc`](lothar-bootstrap.mdc) for collection and in-place execution. Never tell the user to run bootstrap commands themselves or open another folder/window.
+4. They can defer SFCC sandbox credentials and use **local mock mode** for browsing and cart; the bootstrap rule implements that automatically.
 
 Do **not** run `git clone`, `pnpm install`, or write project files from this rule alone.
 

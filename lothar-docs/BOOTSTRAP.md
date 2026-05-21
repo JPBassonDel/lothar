@@ -22,6 +22,7 @@ Lothar meta documentation stays in [lothar-docs/README.md](./README.md).
 
 | Variable | Description |
 |----------|-------------|
+| `SFCC_USE_MOCK` | Set to `"true"` for local mock catalog/cart (no SFCC sandbox). Default `"false"` in `.env.example`. |
 | `SITE_NAME` | Store display name |
 | `SFCC_ORGANIZATIONID` | Org ID, e.g. `f_ecom_xxxx_xxx` |
 | `SFCC_SHORTCODE` | Instance short code |
@@ -34,11 +35,24 @@ Lothar meta documentation stays in [lothar-docs/README.md](./README.md).
 
 **Secrets live only in `.env.local`.** Do not commit that file.
 
+## Mock mode
+
+When you defer SFCC sandbox credentials during bootstrap, Lothar enables **local mock mode**:
+
+- Sets `SFCC_USE_MOCK="true"` in `.env.local` and adds `commerce.mockMode: true` in `accelerator.manifest.json`
+- Patches `lib/sfcc/` with a lightweight mock layer (static catalog, cookie-backed cart)
+
+**Works without SFCC:** homepage collections, product listing/search, product detail pages, add to cart, cart updates.
+
+**Still requires a real sandbox:** checkout (shipping, payment, place order). When you have credentials, set `SFCC_USE_MOCK="false"`, replace placeholder SFCC values with real ones, and configure SLAS in Business Manager.
+
+`SFCC_USE_MOCK="true"` forces mock even if other env vars look real. Placeholder values alone also auto-enable mock when `SFCC_USE_MOCK` is unset.
+
 ## Manifest file
 
 `accelerator.manifest.json` is written at the workspace root. It records:
 
-- Commerce platform and site ID
+- Commerce platform and site ID (and `mockMode: true` when bootstrap used local mock)
 - Frontend template used
 - Sandbox org/short code (non-secret identifiers)
 - Agent progress (`bootstrap: complete`, others `pending`)
