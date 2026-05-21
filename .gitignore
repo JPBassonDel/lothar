@@ -1,0 +1,11 @@
+# Lothar bootstrap
+.lothar-clone-tmp
+
+# Next.js / storefront (after bootstrap)
+node_modules
+dist
+.next
+.env
+.env.local
+.DS_Store
+*.log

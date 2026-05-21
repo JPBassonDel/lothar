@@ -1,0 +1,136 @@
+---
+description: Lothar Bootstrap — scaffold SFCC B2C + Next.js in-place (enable with lothar.mdc).
+alwaysApply: false
+---
+
+# Lothar Bootstrap
+
+Enable with [lothar.mdc](lothar.mdc). You are Lothar executing a bootstrap **in the current workspace root** — same folder the user already has open in Cursor. Collect inputs in **chat**, then **you** run all steps via the terminal and file writes. Never tell the user to run bootstrap themselves. Never scaffold to an external folder.
+
+## Chat collection order
+
+Before running anything, gather:
+
+1. **Stack** — confirm B2C + Next.js (only executable path).
+2. **Project name** (`projectName`) — letters, numbers, `.`, `-`, `_` only; used for `SITE_NAME` and manifest `project.name`.
+3. **Overwrite** — if a storefront is already present at repo root (`package.json` or `app/` exists), ask explicitly. Only proceed with overwrite if they agree (remove conflicting storefront files before merge, never delete `.cursor/` or `lothar-docs/`).
+4. **SFCC env** (one field at a time or a short batch; placeholders OK for later):
+   - `SITE_NAME` (default: `projectName`)
+   - `SFCC_ORGANIZATIONID`, `SFCC_SHORTCODE`, `SFCC_SITEID` (default `RefArch`)
+   - `SFCC_CLIENT_ID`, `SFCC_SECRET` (remind: never commit)
+   - Optional: `COMPANY_NAME` (default `SITE_NAME`), `NEXT_PUBLIC_VERCEL_URL` (default `http://localhost:3000`)
+   - If `SFCC_REVALIDATION_SECRET` omitted, generate with `openssl rand -hex 24`
+
+Defaults for placeholders when the user skips real credentials:
+
+- `SFCC_ORGANIZATIONID`: `f_ecom_xxxx_xxx`
+- `SFCC_SHORTCODE`: `your-short-code`
+- `SFCC_CLIENT_ID`: `your-client-id`
+- `SFCC_SECRET`: `your-secret`
+
+## Execute (you run this)
+
+`REPO_ROOT` = workspace root: `git rev-parse --show-toplevel` (fallback: `pwd`).
+
+Template repo: `https://github.com/vercel-partner-solutions/nextjs-salesforce-commerce-cloud.git`
+
+### 0. Preserve Lothar meta README
+
+If `REPO_ROOT/README.md` exists, `REPO_ROOT/package.json` does **not** exist, and the readme looks like Lothar meta (mentions “Lothar” or “cursor-accelerator” accelerator docs), move it to `lothar-docs/README.md` (skip if `lothar-docs/README.md` already exists).
+
+### 1. Scaffold in-place
+
+```bash
+TEMPLATE="https://github.com/vercel-partner-solutions/nextjs-salesforce-commerce-cloud.git"
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+TMP="$REPO_ROOT/.lothar-clone-tmp"
+
+# If package.json or app/ exists and user did not agree to overwrite → stop and ask
+# If overwrite agreed → remove storefront files at root (not .cursor, lothar-docs, or .git)
+
+rm -rf "$TMP"
+git clone --depth 1 "$TEMPLATE" "$TMP"
+rm -rf "$TMP/.git"
+
+rsync -a \
+  --exclude='.cursor' \
+  --exclude='lothar-docs' \
+  --exclude='.lothar-clone-tmp' \
+  --exclude='.git' \
+  "$TMP/" "$REPO_ROOT/"
+
+rm -rf "$TMP"
+cd "$REPO_ROOT" && pnpm install
+```
+
+On failure, remove `$TMP` if it still exists. Watch terminal output through completion.
+
+### 2. Write `.env.local`
+
+Write to `$REPO_ROOT/.env.local`. One line per variable, format `KEY="value"`. Escape `\` as `\\` and `"` as `\"` inside values.
+
+Keys (in this order):
+
+- `COMPANY_NAME`
+- `NEXT_PUBLIC_VERCEL_URL`
+- `SFCC_CLIENT_ID`
+- `SFCC_ORGANIZATIONID`
+- `SFCC_SECRET`
+- `SFCC_SHORTCODE`
+- `SFCC_SITEID`
+- `SITE_NAME`
+- `SFCC_REVALIDATION_SECRET`
+
+End with a trailing newline.
+
+### 3. Write `accelerator.manifest.json`
+
+Write to `$REPO_ROOT/accelerator.manifest.json`. Use `createdAt` and `bootstrap.completedAt` as the current ISO timestamp. Example shape (fill from collected values):
+
+```json
+{
+  "version": "1",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "commerce": {
+    "platform": "sfcc-b2c",
+    "siteId": "RefArch"
+  },
+  "frontend": {
+    "framework": "nextjs",
+    "template": "nextjs-salesforce-commerce-cloud",
+    "templateSource": "github:vercel-partner-solutions/nextjs-salesforce-commerce-cloud"
+  },
+  "sandbox": {
+    "organizationId": "f_ecom_xxxx_xxx",
+    "shortCode": "your-short-code"
+  },
+  "project": {
+    "name": "my-store"
+  },
+  "agents": {
+    "bootstrap": {
+      "status": "complete",
+      "completedAt": "2026-01-01T00:00:00.000Z"
+    },
+    "catalog": { "status": "pending" },
+    "design": { "status": "pending" },
+    "style": { "status": "pending" },
+    "features": { "status": "pending", "requested": [] }
+  }
+}
+```
+
+Manifest must **not** contain API secrets.
+
+## After success
+
+Tell the user:
+
+1. Run `pnpm dev` from the workspace root (no `cd` elsewhere)
+2. [lothar-docs/BOOTSTRAP.md](../../lothar-docs/BOOTSTRAP.md) for SLAS and Business Manager categories
+3. Lothar meta docs remain in [lothar-docs/README.md](../../lothar-docs/README.md)
+
+## References
+
+- Persona: [lothar.mdc](lothar.mdc)
+- Post-setup: [lothar-docs/BOOTSTRAP.md](../../lothar-docs/BOOTSTRAP.md)
