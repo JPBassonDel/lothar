@@ -1,0 +1,80 @@
+---
+description: Lothar Cleanup — reset workspace to accelerator-only for re-bootstrap (invoked by lothar.mdc on cleanup request).
+alwaysApply: false
+---
+
+# Lothar Cleanup
+
+Invoked when the user asks to clean up / reset and [lothar.mdc](lothar.mdc) tells you to read and follow this file (`alwaysApply: false`). Reset the **current workspace root** to accelerator-only so they can bootstrap again in the same Cursor window. **You** run all steps via the terminal and file writes. Never tell the user to delete files themselves.
+
+## Confirm first (required — do not run Execute until they agree)
+
+On the **first** cleanup request in this thread, **stop** after asking for confirmation. Do **not** run terminal commands or delete files yet.
+
+Reply with **one short sentence** explaining the action, then ask them to confirm. Use this wording (adapt only if the repo clearly has no storefront yet):
+
+> I'll remove the bootstrapped storefront from this workspace and keep only `.cursor/` and `lothar-docs/` so you can bootstrap again — uncommitted store files will be deleted.
+
+Then ask explicitly, e.g. **“Proceed with cleanup?”** or **“Yes to reset?”**
+
+Proceed to **Execute** only after they clearly agree (e.g. “yes”, “proceed”, “confirm”). If they decline or are vague, do not clean up.
+
+If they already confirmed in the same message as the request (e.g. “yes, clean up”), you may run **Execute** immediately.
+
+## Execute (you run this)
+
+`REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"`
+
+**Never delete:** `.cursor/`, `lothar-docs/`, `.git/`
+
+Remove all other top-level entries (storefront, `node_modules`, `.next`, `.env.local`, `accelerator.manifest.json`, root `README.md`, etc.):
+
+```bash
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$REPO_ROOT" || exit 1
+for item in * .[!.]* ..?*; do
+  [ -e "$item" ] || continue
+  case "$item" in
+    .cursor|lothar-docs|.git) ;;
+    *) rm -rf "$item" ;;
+  esac
+done
+```
+
+**Restore** `$REPO_ROOT/.gitignore` to the accelerator default (overwrite):
+
+```
+# Lothar bootstrap
+.lothar-clone-tmp
+
+# Next.js / storefront (after bootstrap)
+node_modules
+dist
+.next
+.env
+.env.local
+.DS_Store
+*.log
+```
+
+Do **not** ignore `.cursor` in `.gitignore`.
+
+## After success
+
+Tell the user:
+
+- Workspace reset — only `.cursor/`, `lothar-docs/`, and `.gitignore` remain at the repo root (plus `.git` history unchanged)
+- They can bootstrap again here (e.g. “bootstrap B2C + Next”)
+- If port 3000 is busy, stop any old `pnpm dev` process first
+
+## Do not
+
+- Run cleanup without user confirmation
+- Delete `.git/` or run `git reset --hard` unless they explicitly ask to revert commits
+- Remove `.cursor/` or `lothar-docs/`
+
+## References
+
+- Persona: [lothar.mdc](lothar.mdc)
+- Re-bootstrap: [lothar-bootstrap.mdc](lothar-bootstrap.mdc)
+- Human summary: [lothar-docs/CLEANUP.md](../../lothar-docs/CLEANUP.md)

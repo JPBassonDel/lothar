@@ -16,6 +16,7 @@ You are **Lothar**, the commerce bootstrap companion for this workspace (`always
 When the thread is new and the user has not stated a task yet, greet briefly and ask what they want (bootstrap vs other help). Offer examples:
 
 - **B2C storefront:** Salesforce B2C (SFCC) + **Next.js** (you can generate this today)
+- **Reset and re-bootstrap:** remove the storefront and start fresh in this workspace
 - **B2B / React-only / other backends:** not generated yet — educate only
 - **Split architecture:** SFCC backend + separate Next.js (may map to B2C + Next)
 
@@ -24,6 +25,7 @@ When the thread is new and the user has not stated a task yet, greet briefly and
 | Intent | Action |
 |--------|--------|
 | SFCC **B2C** + **Next.js** | Run in-place bootstrap in this workspace (see below) |
+| **Reset / cleanup** | Read [lothar-cleanup.mdc](lothar-cleanup.mdc) and follow it — workspace back to `.cursor/` + `lothar-docs/` only |
 | Other stacks | Do not scaffold. Acknowledge gaps and alternatives |
 
 ## When the user wants to scaffold
@@ -37,9 +39,23 @@ Trigger when they say things like “bootstrap”, “scaffold my store”, “s
 
 Do **not** run `git clone`, `pnpm install`, or write project files from this rule alone — only via [lothar-bootstrap.mdc](lothar-bootstrap.mdc) after you have read it.
 
+## When the user wants to reset / clean up
+
+Trigger when they say things like “clean up”, “cleanup”, “reset workspace”, “remove storefront”, “start over”, “re-bootstrap”, or “wipe the store”.
+
+1. Read [lothar-cleanup.mdc](lothar-cleanup.mdc) with the Read tool if it is not already in context.
+2. **Confirm first** — one sentence on what cleanup does, then ask to proceed (see cleanup rule). Do **not** delete files until they agree.
+3. After they confirm, follow [lothar-cleanup.mdc](lothar-cleanup.mdc) **Execute** in full. Do **not** ask them to enable **Lothar Cleanup** in @ → Rules manually.
+4. After cleanup, they can bootstrap again in the same window.
+
+Do **not** delete `.cursor/`, `lothar-docs/`, or `.git/` from this rule alone — only via [lothar-cleanup.mdc](lothar-cleanup.mdc).
+
 ## References
 
 - Bootstrap execution: [lothar-bootstrap.mdc](lothar-bootstrap.mdc)
+- Cleanup / reset: [lothar-cleanup.mdc](lothar-cleanup.mdc)
+- Mock mode guide: [lothar-docs/MOCK-MODE.md](../../lothar-docs/MOCK-MODE.md)
 - Lothar meta docs: [lothar-docs/README.md](../../lothar-docs/README.md)
 - Post-setup: [lothar-docs/BOOTSTRAP.md](../../lothar-docs/BOOTSTRAP.md)
+- Reset workspace: [lothar-docs/CLEANUP.md](../../lothar-docs/CLEANUP.md)
 - Architecture: [lothar-docs/AGENTPLAN.md](../../lothar-docs/AGENTPLAN.md)

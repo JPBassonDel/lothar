@@ -16,7 +16,7 @@ Before running anything, gather:
 3. **Overwrite** — if a storefront is already present at repo root (`package.json` or `app/` exists), ask explicitly. Only proceed with overwrite if they agree (remove conflicting storefront files before merge, never delete `.cursor/` or `lothar-docs/`).
 4. **SFCC credentials or mock mode** — ask: *“Do you have SFCC sandbox credentials now, or use local mock mode for now?”*
    - Set `useMockMode = true` when the user defers/skips credentials, says “placeholders”, “not yet”, “mock”, “defaults only”, or only provides branding (`projectName`, `SITE_NAME`, `COMPANY_NAME`, `NEXT_PUBLIC_VERCEL_URL`).
-   - When `useMockMode`: skip collecting real SFCC values; use placeholder defaults below and implement the mock layer after scaffold (see [Mock mode](#mock-mode-deferred-sfcc-credentials)).
+   - When `useMockMode`: skip collecting real SFCC values; use placeholder defaults below and implement the mock layer after scaffold (step **1b**).
    - When not mock mode: collect SFCC env (one field at a time or a short batch):
      - `SITE_NAME` (default: `projectName`)
      - `SFCC_ORGANIZATIONID`, `SFCC_SHORTCODE`, `SFCC_SITEID` (default `RefArch`)
@@ -69,9 +69,26 @@ cd "$REPO_ROOT" && pnpm install
 
 On failure, remove `$TMP` if it still exists. Watch terminal output through completion.
 
-### 1b. Implement mock layer (when `useMockMode`)
+### 1b. Mock layer (when `useMockMode`)
 
-Required before telling the user to run `pnpm dev`. The upstream template has no mock support — see [Mock mode](#mock-mode-deferred-sfcc-credentials).
+Required before verify. Read [MOCK-MODE.md](../../lothar-docs/MOCK-MODE.md) with the Read tool and follow it.
+
+1. Copy golden files:
+
+```bash
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cp "$REPO_ROOT/lothar-docs/bootstrap-assets/lib/sfcc/mock-mode.ts" "$REPO_ROOT/lib/sfcc/"
+cp "$REPO_ROOT/lothar-docs/bootstrap-assets/lib/sfcc/mock-data.ts" "$REPO_ROOT/lib/sfcc/"
+cp "$REPO_ROOT/lothar-docs/bootstrap-assets/lib/sfcc/mock.ts" "$REPO_ROOT/lib/sfcc/"
+```
+
+2. Patch `lib/sfcc/index.ts` per MOCK-MODE.md (mock branches + `*Cached()` helpers).
+3. Merge Picsum `remotePatterns` from [next.config.remotePatterns.json](../../lothar-docs/bootstrap-assets/next.config.remotePatterns.json) into `next.config.ts` if not already present.
+4. Add `SFCC_USE_MOCK` to `.env.example` (default `"false"`).
+5. Add `"verify:bootstrap": "tsc --noEmit && next build"` to `package.json` scripts if missing.
+6. In `tsconfig.json`, add `"lothar-docs"` to `exclude` (golden assets under `lothar-docs/bootstrap-assets/` are not part of the storefront compile).
+
+If golden files are missing, implement the file list in MOCK-MODE.md from scratch.
 
 ### 2. Write `.env.local`
 
@@ -96,7 +113,7 @@ End with a trailing newline.
 
 ### 3. Write `accelerator.manifest.json`
 
-Write to `$REPO_ROOT/accelerator.manifest.json`. Use `createdAt` and `bootstrap.completedAt` as the current ISO timestamp. Example shape (fill from collected values):
+Write to `$REPO_ROOT/accelerator.manifest.json`. Use current ISO timestamps. Example shape (fill from collected values; add `verifiedAt` / `verify` after step **1c** passes):
 
 ```json
 {
@@ -122,7 +139,9 @@ Write to `$REPO_ROOT/accelerator.manifest.json`. Use `createdAt` and `bootstrap.
   "agents": {
     "bootstrap": {
       "status": "complete",
-      "completedAt": "2026-01-01T00:00:00.000Z"
+      "completedAt": "2026-01-01T00:00:00.000Z",
+      "verifiedAt": "2026-01-01T00:00:00.000Z",
+      "verify": { "tsc": true, "build": true, "smoke": false }
     },
     "catalog": { "status": "pending" },
     "design": { "status": "pending" },
@@ -132,11 +151,46 @@ Write to `$REPO_ROOT/accelerator.manifest.json`. Use `createdAt` and `bootstrap.
 }
 ```
 
-Manifest must **not** contain API secrets. Include `"mockMode": true` under `commerce` only when `useMockMode`.
+Manifest must **not** contain API secrets. Include `"mockMode": true` under `commerce` only when `useMockMode`. Set `agents.bootstrap.verify` from step **1c** results.
+
+### 1c. Verify (required before success)
+
+Run **after** steps **2** and **3** so `.env.local` is loaded for the build.
+
+From `$REPO_ROOT`:
+
+```bash
+pnpm verify:bootstrap
+```
+
+If `verify:bootstrap` is not in `package.json` yet:
+
+```bash
+pnpm exec tsc --noEmit
+pnpm build
+```
+
+**On any failure:** read the error, consult [MOCK-MODE.md](../../lothar-docs/MOCK-MODE.md) troubleshooting, fix, and re-run until exit code 0. **Do not** tell the user bootstrap succeeded until verify passes.
+
+**Optional smoke** (recommended when `useMockMode`):
+
+```bash
+pnpm start &
+sleep 3
+for path in / /search/mens /product/mock-tee-black; do
+  code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000$path")
+  test "$code" = "200" || exit 1
+done
+kill %1
+```
+
+Use a real mock product id from `lib/sfcc/mock-data.ts` in the PDP path. Record `verify.smoke: true` in the manifest when smoke passes.
+
+Update `accelerator.manifest.json` with `verifiedAt` and `verify` before declaring success.
 
 ## After success
 
-Tell the user:
+Only after step **1c** passes. Tell the user:
 
 1. Run `pnpm dev` from the workspace root (no `cd` elsewhere)
 2. [lothar-docs/BOOTSTRAP.md](../../lothar-docs/BOOTSTRAP.md) for SLAS and Business Manager categories
@@ -145,63 +199,20 @@ Tell the user:
 When **`useMockMode`**, also tell them:
 
 - The store runs in **local mock mode** — browse PLP/PDP and cart without SFCC
+- Bootstrap verify ran `pnpm verify:bootstrap` (and smoke if applicable)
 - Checkout still needs a real sandbox; when ready, set `SFCC_USE_MOCK="false"` in `.env.local` and replace placeholder SFCC values with real credentials
 - `SFCC_USE_MOCK="true"` forces mock even if env values look real
+- Implementation details: [lothar-docs/MOCK-MODE.md](../../lothar-docs/MOCK-MODE.md)
 
-## Mock mode (deferred SFCC credentials)
+## Mock mode (summary)
 
-<!-- When the user has not provided real SFCC sandbox values, bootstrap must not leave a broken storefront. -->
+When the user defers SFCC credentials, set `useMockMode`, run step **1b**, write `SFCC_USE_MOCK="true"` in `.env.local`, and set `commerce.mockMode: true` in the manifest.
 
-### When this applies
-
-- `useMockMode` is true from chat collection, OR
-- The user explicitly asks to skip / defer SFCC details.
-
-### After scaffold (required when mock mode)
-
-The upstream template has no mock support. **You must implement** a lightweight mock layer (step **1b**) before telling the user to run `pnpm dev`:
-
-1. **`lib/sfcc/mock-mode.ts`** — `isSfccMockMode()`:
-   - `true` if `SFCC_USE_MOCK === "true"`
-   - `false` if `SFCC_USE_MOCK === "false"`
-   - else auto-detect placeholder env values (`your-client-id`, `your-secret`, `your-short-code`, `f_ecom_xxxx_xxx`, empty strings)
-
-2. **`lib/sfcc/mock-data.ts`** — static catalog:
-   - ~6 sample products with handles matching mock IDs (e.g. `mock-tee-black`)
-   - Collections aligned with `storeCatalog` IDs in `lib/sfcc/constants.ts` (`mens`, `womens`, `newarrivals`, `top-seller`)
-   - Include `hidden-homepage-carousel` and `hidden-homepage-featured-items` product mappings for the homepage
-   - Picsum image URLs (no Business Manager assets required)
-
-3. **`lib/sfcc/mock.ts`** — cookie-backed cart:
-   - `MOCK_CART_ID`, `mock_cart_lines` cookie
-   - Implement: `mockGetCollections`, `mockGetProduct`, `mockSearchProducts`, `mockCreateCart`, `mockGetCart`, `mockAddToCart`, `mockRemoveFromCart`, `mockUpdateCart`, `mockGetProductRecommendations`
-
-4. **Patch `lib/sfcc/index.ts`** — import `isSfccMockMode` and `* as mock`; at the start of each exported shopper-facing function below, `if (isSfccMockMode()) return mock.<fn>(...)`:
-   - `getCollections`, `getProduct`, `getCollectionProducts`, `getProducts`
-   - `createCart`, `getCart`, `addToCart`, `removeFromCart`, `updateCart`, `getProductRecommendations`
-   - Do **not** stub checkout/order functions in v1 (`updateCustomerInfo`, shipping, payment, `placeOrder`, etc.).
-
-5. **Update `.env.example`** — document `SFCC_USE_MOCK` (default `"false"`).
-
-**Reference implementation** (if these files already exist in the workspace after clone, match or copy them): `lib/sfcc/mock-mode.ts`, `lib/sfcc/mock-data.ts`, `lib/sfcc/mock.ts`, and the `isSfccMockMode()` branches in `lib/sfcc/index.ts`.
-
-### `.env.local` when mock mode
-
-- First key: `SFCC_USE_MOCK="true"`
-- Remaining SFCC keys: placeholder defaults from chat collection
-- Still generate `SFCC_REVALIDATION_SECRET` (harmless for mock browsing)
-
-### `accelerator.manifest.json` when mock mode
-
-```json
-"commerce": {
-  "platform": "sfcc-b2c",
-  "siteId": "RefArch",
-  "mockMode": true
-}
-```
+Full implementation guide: [lothar-docs/MOCK-MODE.md](../../lothar-docs/MOCK-MODE.md).
 
 ## References
 
 - Persona: [lothar.mdc](lothar.mdc)
+- Mock implementation: [lothar-docs/MOCK-MODE.md](../../lothar-docs/MOCK-MODE.md)
+- Golden assets: [lothar-docs/bootstrap-assets/README.md](../../lothar-docs/bootstrap-assets/README.md)
 - Post-setup: [lothar-docs/BOOTSTRAP.md](../../lothar-docs/BOOTSTRAP.md)

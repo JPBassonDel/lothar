@@ -18,6 +18,24 @@ The agent clones [nextjs-salesforce-commerce-cloud](https://github.com/vercel-pa
 
 Lothar meta documentation stays in [lothar-docs/README.md](./README.md).
 
+## Bootstrap verification
+
+Before Lothar declares bootstrap successful, it runs **verify** from the storefront root (after `.env.local` exists):
+
+```bash
+pnpm verify:bootstrap
+```
+
+This runs TypeScript check and `next build`. It catches common mock-mode issues (e.g. `"use cache"` placement, unconfigured `next/image` hosts) without you having to start `pnpm dev` first.
+
+On failure, Lothar fixes the storefront and re-runs verify. Optional HTTP smoke tests (`pnpm start` + `curl`) may run for mock mode.
+
+Re-run verify anytime:
+
+```bash
+pnpm verify:bootstrap
+```
+
 ## Environment variables
 
 | Variable | Description |
@@ -40,13 +58,15 @@ Lothar meta documentation stays in [lothar-docs/README.md](./README.md).
 When you defer SFCC sandbox credentials during bootstrap, Lothar enables **local mock mode**:
 
 - Sets `SFCC_USE_MOCK="true"` in `.env.local` and adds `commerce.mockMode: true` in `accelerator.manifest.json`
-- Patches `lib/sfcc/` with a lightweight mock layer (static catalog, cookie-backed cart)
+- Copies golden mock files from `lothar-docs/bootstrap-assets/` and patches `lib/sfcc/`
 
 **Works without SFCC:** homepage collections, product listing/search, product detail pages, add to cart, cart updates.
 
 **Still requires a real sandbox:** checkout (shipping, payment, place order). When you have credentials, set `SFCC_USE_MOCK="false"`, replace placeholder SFCC values with real ones, and configure SLAS in Business Manager.
 
 `SFCC_USE_MOCK="true"` forces mock even if other env vars look real. Placeholder values alone also auto-enable mock when `SFCC_USE_MOCK` is unset.
+
+Implementation guide (Next.js pitfalls, `index.ts` patches): [MOCK-MODE.md](./MOCK-MODE.md).
 
 ## Manifest file
 
@@ -56,6 +76,18 @@ When you defer SFCC sandbox credentials during bootstrap, Lothar enables **local
 - Frontend template used
 - Sandbox org/short code (non-secret identifiers)
 - Agent progress (`bootstrap: complete`, others `pending`)
+- Bootstrap verification (`verifiedAt`, `verify.tsc`, `verify.build`, optional `verify.smoke`)
+
+Example bootstrap agent block after verify:
+
+```json
+"bootstrap": {
+  "status": "complete",
+  "completedAt": "2026-01-01T00:00:00.000Z",
+  "verifiedAt": "2026-01-01T00:00:00.000Z",
+  "verify": { "tsc": true, "build": true, "smoke": false }
+}
+```
 
 It does **not** store API secrets.
 
@@ -69,7 +101,7 @@ Run from the workspace root — no need to `cd` elsewhere or open a new Cursor w
 
 Configure SLAS in Business Manager if you have not already. See [SFCC Shopper API authorization](https://developer.salesforce.com/docs/commerce/commerce-api/guide/authorization-for-shopper-apis.html).
 
-For homepage content, create categories `hidden-homepage-carousel` and `hidden-homepage-featured-items` in Business Manager (see the store README at repo root).
+For homepage content with a **live** sandbox, create categories `hidden-homepage-carousel` and `hidden-homepage-featured-items` in Business Manager (see the store README at repo root). Mock mode includes these in static data.
 
 ## What's next
 

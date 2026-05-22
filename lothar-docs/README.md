@@ -17,9 +17,16 @@ After bootstrap, the **store README** lives at the repo root; this file stays he
 
 See [AGENTPLAN.md](./AGENTPLAN.md) for architecture; [BOOTSTRAP.md](./BOOTSTRAP.md) for env vars and post-setup.
 
+## Reset and re-bootstrap
+
+To remove the storefront and keep only `.cursor/` and `lothar-docs/`, see [CLEANUP.md](./CLEANUP.md).
+
 ## Lothar docs
 
-- [BOOTSTRAP.md](./BOOTSTRAP.md) — env vars, manifest, post-setup
+- [CLEANUP.md](./CLEANUP.md) — reset workspace for a fresh bootstrap
+- [BOOTSTRAP.md](./BOOTSTRAP.md) — env vars, manifest, verify gate, post-setup
+- [MOCK-MODE.md](./MOCK-MODE.md) — mock layer implementation and Next.js pitfalls
+- [bootstrap-assets/](./bootstrap-assets/) — golden mock files copied during bootstrap
 - [PLAN.md](./PLAN.md) — architecture and roadmap (historical)
 - [AGENTPLAN.md](./AGENTPLAN.md) — Lothar persona, rules, and bootstrap flow
 
@@ -29,8 +36,10 @@ See [AGENTPLAN.md](./AGENTPLAN.md) for architecture; [BOOTSTRAP.md](./BOOTSTRAP.
 cursor-accelerator/
 ├── .cursor/rules/
 │   ├── lothar.mdc           # Persona and capabilities
-│   └── lothar-bootstrap.mdc # In-place scaffold (auto-loaded on bootstrap request)
+│   ├── lothar-bootstrap.mdc # In-place scaffold (auto-loaded on bootstrap request)
+│   └── lothar-cleanup.mdc  # Reset to accelerator-only (auto-loaded on cleanup request)
 ├── lothar-docs/             # This folder — Lothar meta docs
+├── .gitignore
 ├── app/                     # (after bootstrap) Next.js storefront
 ├── package.json             # (after bootstrap)
 └── README.md                # (after bootstrap) store README from template
